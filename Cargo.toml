@@ -1,0 +1,6 @@
+[package]
+name = "TTP"
+version = "0.1.0"
+authors = ["Arthur Carcano <arthur.carcano@ens.fr>"]
+
+[dependencies]
