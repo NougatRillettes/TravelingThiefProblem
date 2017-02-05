@@ -1,3 +1,10 @@
+
+use std::io::prelude::*;
+
+mod instance;
+
 fn main() {
-    println!("Hello, world!");
+    let stdin = std::io::stdin();
+    let inst = instance::read_instance(stdin.lock());
+    println!("{:?}", inst);
 }
