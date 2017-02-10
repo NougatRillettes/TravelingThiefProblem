@@ -13,7 +13,13 @@ pub struct Item {
     , pub in_city: u64
 }
 
-type Coord = (u64,u64);
+type Coord = (i64,i64);
+
+pub fn sqr_distance(c1: Coord, c2 : Coord) -> u64{
+    let (x,y) = c1;
+    let (a,b) = c2;
+    ((a-x).pow(2)+(b-y).pow(2)) as u64
+}
 
 #[derive(Debug, Default)]
 pub struct Instance {
