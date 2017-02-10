@@ -7,18 +7,18 @@ use std::io;
 
 #[derive(Debug)]
 pub struct Item {
-    pub index: u64
-    , pub profit: i64
-    , pub weight: u64
-    , pub in_city: u64
+    pub index: u64,
+    pub profit: i64,
+    pub weight: u64,
+    pub in_city: u64,
 }
 
-type Coord = (i64,i64);
+type Coord = (i64, i64);
 
-pub fn sqr_distance(c1: Coord, c2 : Coord) -> u64{
-    let (x,y) = c1;
-    let (a,b) = c2;
-    ((a-x).pow(2)+(b-y).pow(2)) as u64
+pub fn sqr_distance(c1: Coord, c2: Coord) -> u64 {
+    let (x, y) = c1;
+    let (a, b) = c2;
+    ((a - x).pow(2) + (b - y).pow(2)) as u64
 }
 
 #[derive(Debug, Default)]
@@ -31,43 +31,50 @@ pub struct Instance {
     pub max_speed: f64,
     pub rent_ratio: f64,
     pub coords: Vec<Coord>,
-    pub items: Vec<Item>
+    pub items: Vec<Item>,
 }
 
-fn read_val_at<F : FromStr, I : Iterator<Item=String>>(s: &mut I,n: usize) -> F where F::Err : Debug {
+fn read_val_at<F: FromStr, I: Iterator<Item = String>>(s: &mut I, n: usize) -> F
+    where F::Err: Debug
+{
     let next_str = s.next().unwrap();
     let mut words = next_str.split_whitespace();
     let to_parse = words.nth(n).unwrap();
     to_parse.parse::<F>().unwrap()
 }
 
-fn read_coords(s : &str) -> Coord {
+fn read_coords(s: &str) -> Coord {
     let mut words = s.split_whitespace();
     let x = words.nth(1).unwrap().parse().unwrap();
     let y = words.next().unwrap().parse().unwrap();
-    (x,y)
+    (x, y)
 }
 
-fn read_item(s : &str) -> Item {
+fn read_item(s: &str) -> Item {
     let mut words = s.split_whitespace();
     let idx = words.nth(0).unwrap().parse().unwrap();
     let profit = words.nth(0).unwrap().parse().unwrap();
     let weight = words.nth(0).unwrap().parse().unwrap();
     let city = words.nth(0).unwrap().parse().unwrap();
-    Item {index : idx, profit : profit, weight: weight, in_city: city}
+    Item {
+        index: idx,
+        profit: profit,
+        weight: weight,
+        in_city: city,
+    }
 }
 
-pub fn read_instance<R : BufRead>(f : R) -> Instance {
+pub fn read_instance<R: BufRead>(f: R) -> Instance {
     let mut lines = f.lines().map(|x| x.unwrap());
-    let mut instance : Instance = Default::default();
+    let mut instance: Instance = Default::default();
     instance.name = lines.next().unwrap().split_whitespace().nth(2).unwrap().to_string();
     lines.next();
-    instance.dimension = read_val_at(&mut lines,1);
-    instance.items_num = read_val_at(&mut lines,3);
-    instance.capacity = read_val_at(&mut lines,3);
-    instance.min_speed = read_val_at(&mut lines,2);
-    instance.max_speed = read_val_at(&mut lines,2);
-    instance.rent_ratio = read_val_at(&mut lines,2);
+    instance.dimension = read_val_at(&mut lines, 1);
+    instance.items_num = read_val_at(&mut lines, 3);
+    instance.capacity = read_val_at(&mut lines, 3);
+    instance.min_speed = read_val_at(&mut lines, 2);
+    instance.max_speed = read_val_at(&mut lines, 2);
+    instance.rent_ratio = read_val_at(&mut lines, 2);
     lines.nth(1);
     let mut coord_vec = vec![];
     for _ in 0..instance.dimension {
