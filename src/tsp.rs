@@ -1,19 +1,20 @@
 use std::slice::Iter;
 use instance::*;
 use std::iter::Peekable;
+use std::rc::Rc;
 
 // Simply a Tour on cities, element of the Vec are cities indexes.
-pub struct Tour<'a> {
-    pub instance: &'a Instance,
+pub struct Tour {
+    pub instance: Rc<Instance>,
     pub cost: u64,
     // Circuits are encoded as an n-vector.
     // /!\ There is n+1 edges : count the wrapping one.
     pub cities: Vec<usize>,
 }
 
-pub fn new_tour(inst: &Instance) -> Tour {
+pub fn new_tour(inst: Rc<Instance>) -> Tour {
     let mut tour = Tour {
-        instance: inst,
+        instance: inst.clone(),
         cost: 0,
         cities: Vec::new(),
     };
@@ -26,9 +27,9 @@ pub fn new_tour(inst: &Instance) -> Tour {
     tour
 }
 
-pub fn new_tour_greedy(inst: &Instance) -> Tour {
+pub fn new_tour_greedy(inst: Rc<Instance>) -> Tour {
     let mut tour = Tour {
-        instance: inst,
+        instance: inst.clone(),
         cost: 0,
         cities: Vec::new(),
     };
@@ -56,7 +57,7 @@ pub fn new_tour_greedy(inst: &Instance) -> Tour {
     tour
 }
 
-impl<'b> Tour<'b> {
+impl Tour {
     pub fn size(&self) -> usize {
         self.cities.len()
     }
@@ -68,7 +69,7 @@ impl<'b> Tour<'b> {
 // An Iterator on the crossing edges of a Tour (ie those whose
 // cost can be reduced by 2-opt
 pub struct TourCrossing<'a> {
-    tour: &'a Tour<'a>,
+    tour: &'a Tour,
     left: usize,
     right: usize,
 }
@@ -87,7 +88,7 @@ impl<'a> Iterator for TourCrossing<'a> {
                 self.right = self.left + 1;
                 continue;
             }
-            let instance = self.tour.instance;
+            let instance = &self.tour.instance;
             let city1a = instance.coords[self.tour.cities[self.left - 1]];
             let city1b = instance.coords[self.tour.cities[self.left]];
             let city2a = instance.coords[self.tour.cities[self.right]];
@@ -102,7 +103,7 @@ impl<'a> Iterator for TourCrossing<'a> {
     }
 }
 
-impl<'b> Tour<'b> {
+impl Tour {
     pub fn crossings<'a>(&'a self) -> TourCrossing<'a> {
         TourCrossing {
             tour: self,
