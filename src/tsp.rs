@@ -6,6 +6,8 @@ use std::iter::Peekable;
 pub struct Tour<'a> {
     pub instance: &'a Instance,
     pub cost: u64,
+    // Circuits are encoded as an n-vector.
+    // /!\ There is n+1 edges : count the wrapping one.
     pub cities: Vec<usize>,
 }
 
@@ -20,6 +22,7 @@ pub fn new_tour(inst: &Instance) -> Tour {
         tour.cities.push(i);
         tour.cost += sqr_distance(c, prev_c);
     }
+    tour.cost += sqr_distance(inst.coords[tour.cities[tour.size()-1]],inst.coords[tour.cities[0]]);
     tour
 }
 
@@ -49,8 +52,16 @@ pub fn new_tour_greedy(inst: &Instance) -> Tour {
         curr_city = inst.coords[tour.cities[tour.cities.len() - 1]];
     }
     //
+    tour.cost += sqr_distance(inst.coords[tour.cities[tour.size()-1]],inst.coords[tour.cities[0]]);
     tour
 }
+
+impl<'b> Tour<'b> {
+    pub fn size(&self) -> usize {
+        self.cities.len()
+    }
+}
+
 
 
 
@@ -92,9 +103,6 @@ impl<'a> Iterator for TourCrossing<'a> {
 }
 
 impl<'b> Tour<'b> {
-    pub fn size(&self) -> usize {
-        self.cities.len()
-    }
     pub fn crossings<'a>(&'a self) -> TourCrossing<'a> {
         TourCrossing {
             tour: self,
