@@ -3,6 +3,8 @@ use instance::*;
 use std::iter::Peekable;
 use std::rc::Rc;
 
+extern crate rand;
+
 // Simply a Tour on cities, element of the Vec are cities indexes.
 pub struct Tour {
     pub instance: Rc<Instance>,
@@ -60,6 +62,31 @@ pub fn new_tour_greedy(inst: Rc<Instance>) -> Tour {
 impl Tour {
     pub fn size(&self) -> usize {
         self.cities.len()
+    }
+
+    pub fn rls_try_one<R : rand::Rng>(&mut self, rng : &mut R) -> bool {
+        let n = self.size();
+        let i = (rng.gen::<usize>() % (n-2)) + 1; // in [1,n-2]
+        let j = (rng.gen::<usize>() % (n -i - 1 )) + i + 1; // in [i+1,n-1]
+        let delta : i64 = {
+            let dist_bewteen = |a: usize,b:usize| {
+                let coord_a = self.instance.coords[self.cities[a]];
+                let coord_b = self.instance.coords[self.cities[b]];
+                let tmp = sqr_distance(coord_a, coord_b);
+                tmp as i64
+            };
+            let di_1 = dist_bewteen(i-1,j) - dist_bewteen(i-1,i);
+            let di_2 = dist_bewteen(j,i+1) - dist_bewteen(i,i+1);
+            let dj_1 = dist_bewteen(j-1,i) - dist_bewteen(j-1,j);
+            let dj_2 = dist_bewteen(i,(j+1)%n) - dist_bewteen(j,(j+1)%n);
+            di_1 + dj_2 + {if (i + 1) == j {0} else {dj_1 + di_2}}
+        };
+        let improving = delta < 0;
+        if improving {
+            self.cities.swap(i,j);
+            self.cost -= (-delta) as u64;
+        }
+        improving
     }
 }
 
