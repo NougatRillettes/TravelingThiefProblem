@@ -2,13 +2,14 @@ use std::slice::Iter;
 use instance::*;
 use std::iter::Peekable;
 use std::rc::Rc;
+use std::sync::mpsc;
 
 extern crate rand;
 
 // Simply a Tour on cities, element of the Vec are cities indexes.
 pub struct Tour {
     pub instance: Rc<Instance>,
-    pub cost: u64,
+    pub cost: f64,
     // Circuits are encoded as an n-vector.
     // /!\ There is n+1 edges : count the wrapping one.
     pub cities: Vec<usize>,
@@ -17,22 +18,23 @@ pub struct Tour {
 pub fn new_tour(inst: Rc<Instance>) -> Tour {
     let mut tour = Tour {
         instance: inst.clone(),
-        cost: 0,
+        cost: 0.0,
         cities: Vec::new(),
     };
     let prev_c = inst.coords[0];
     for (i, &c) in inst.coords.iter().enumerate() {
         tour.cities.push(i);
-        tour.cost += sqr_distance(c, prev_c);
+        tour.cost += euc_distance(c, prev_c);
     }
-    tour.cost += sqr_distance(inst.coords[tour.cities[tour.size()-1]],inst.coords[tour.cities[0]]);
+    tour.cost += euc_distance(inst.coords[tour.cities[tour.size() - 1]],
+                              inst.coords[tour.cities[0]]);
     tour
 }
 
 pub fn new_tour_greedy(inst: Rc<Instance>) -> Tour {
     let mut tour = Tour {
         instance: inst.clone(),
-        cost: 0,
+        cost: 0.0,
         cities: Vec::new(),
     };
     let n = tour.instance.coords.len();
@@ -43,19 +45,20 @@ pub fn new_tour_greedy(inst: Rc<Instance>) -> Tour {
     while tour.cities.len() < n {
         {
             let coord_iter = tour.instance.coords.iter().enumerate();
-            let dist_iter = coord_iter.map(|(i, &x)| (i, sqr_distance(curr_city, x)));
+            let dist_iter = coord_iter.map(|(i, &x)| (i, sq_distance(curr_city, x)));
             let done_iter = done.iter_mut();
             let zip_iter = dist_iter.zip(done_iter);
             let rem_dist = zip_iter.filter(|&(_, &mut y)| !y);
             let nearest = rem_dist.min_by_key(|&((_, x), _)| x).unwrap();
             *nearest.1 = true;
             tour.cities.push((nearest.0).0);
-            tour.cost += (nearest.0).1;
+            tour.cost += ((nearest.0).1 as f64).sqrt();
         }
         curr_city = inst.coords[tour.cities[tour.cities.len() - 1]];
     }
     //
-    tour.cost += sqr_distance(inst.coords[tour.cities[tour.size()-1]],inst.coords[tour.cities[0]]);
+    tour.cost += euc_distance(inst.coords[tour.cities[tour.size() - 1]],
+                              inst.coords[tour.cities[0]]);
     tour
 }
 
@@ -64,40 +67,49 @@ impl Tour {
         self.cities.len()
     }
 
-    pub fn rls_try_one<R : rand::Rng>(&mut self, rng : &mut R, temp : f64) -> (bool,bool) {
+    pub fn rls_try_one(&mut self,
+                       c: &mpsc::Receiver<(usize, usize, f64)>,
+                       temp: f64)
+                       -> (bool, bool) {
         let n = self.size();
-        let mut i = (rng.gen::<usize>() % (n-1)) + 1; // in [1,n-1]
-        let mut j = (rng.gen::<usize>() % (n - 2)) + 1;
+        let msg = c.recv().unwrap();
+        let mut i = (msg.0 % (n - 1)) + 1; // in [1,n-1]
+        let mut j = (msg.1 % (n - 2)) + 1;
         if j >= i {
             j += 1;
         }
         {
-            use std::cmp::{min,max};
-            let tmp = min(i,j);
-            j = max(i,j);
+            use std::cmp::{min, max};
+            let tmp = min(i, j);
+            j = max(i, j);
             i = tmp;
         }
-        let delta : i64 = {
-            let dist_bewteen = |a: usize,b:usize| {
+        let delta: i64 = {
+            let dist_bewteen = |a: usize, b: usize| {
                 let coord_a = self.instance.coords[self.cities[a]];
                 let coord_b = self.instance.coords[self.cities[b]];
-                let tmp = sqr_distance(coord_a, coord_b);
+                let tmp = euc_distance(coord_a, coord_b);
                 tmp as i64
             };
-            let di_1 = dist_bewteen(i-1,j) - dist_bewteen(i-1,i);
-            let di_2 = dist_bewteen(j,i+1) - dist_bewteen(i,i+1);
-            let dj_1 = dist_bewteen(j-1,i) - dist_bewteen(j-1,j);
-            let dj_2 = dist_bewteen(i,(j+1)%n) - dist_bewteen(j,(j+1)%n);
-            di_1 + dj_2 + {if (i + 1) == j {0} else {dj_1 + di_2}}
+            let di_1 = dist_bewteen(i - 1, j) - dist_bewteen(i - 1, i);
+            let di_2 = dist_bewteen(j, i + 1) - dist_bewteen(i, i + 1);
+            let dj_1 = dist_bewteen(j - 1, i) - dist_bewteen(j - 1, j);
+            let dj_2 = dist_bewteen(i, (j + 1) % n) - dist_bewteen(j, (j + 1) % n);
+            di_1 + dj_2 +
+            {
+                if (i + 1) == j { 0 } else { dj_1 + di_2 }
+            }
         };
         let improving = delta < 0;
-        let accepting = rng.gen::<f64>() <= (- (delta as f64) / temp).exp();
+        let accepting = msg.2 <= (-(delta as f64) / temp).exp();
         if accepting {
-            self.cities.swap(i,j);
-            self.cost -= (-delta) as u64;
+            self.cities.swap(i, j);
+            self.cost -= (-delta) as f64;
         }
-        (improving,accepting)
+        (improving, accepting)
     }
+
+
 }
 
 
@@ -130,8 +142,8 @@ impl<'a> Iterator for TourCrossing<'a> {
             let city1b = instance.coords[self.tour.cities[self.left]];
             let city2a = instance.coords[self.tour.cities[self.right]];
             let city2b = instance.coords[self.tour.cities[self.right + 1]];
-            if sqr_distance(city1a, city1b) + sqr_distance(city2a, city2b) >
-               sqr_distance(city1a, city2a) + sqr_distance(city1b, city2b) {
+            if euc_distance(city1a, city1b) + euc_distance(city2a, city2b) >
+               euc_distance(city1a, city2a) + euc_distance(city1b, city2b) {
                 self.right += 1;
                 return Some((self.left, self.right - 1));
             }

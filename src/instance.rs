@@ -15,10 +15,14 @@ pub struct Item {
 
 type Coord = (i64, i64);
 
-pub fn sqr_distance(c1: Coord, c2: Coord) -> u64 {
+pub fn sq_distance(c1: Coord, c2: Coord) -> u64 {
     let (x, y) = c1;
     let (a, b) = c2;
-    ((a - x).pow(2) + (b - y).pow(2)) as u64
+    ((a - x)*(a - x) + (b - y)*(b - y)) as u64
+}
+
+pub fn euc_distance(c1 : Coord, c2: Coord) -> f64 {
+    (sq_distance(c1,c2) as f64).sqrt()
 }
 
 #[derive(Debug, Default)]
