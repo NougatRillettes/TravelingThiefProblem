@@ -64,7 +64,7 @@ impl Tour {
         self.cities.len()
     }
 
-    pub fn rls_try_one<R : rand::Rng>(&mut self, rng : &mut R) -> bool {
+    pub fn rls_try_one<R : rand::Rng>(&mut self, rng : &mut R, temp : f64) -> (bool,bool) {
         let n = self.size();
         let i = (rng.gen::<usize>() % (n-2)) + 1; // in [1,n-2]
         let j = (rng.gen::<usize>() % (n -i - 1 )) + i + 1; // in [i+1,n-1]
@@ -82,11 +82,12 @@ impl Tour {
             di_1 + dj_2 + {if (i + 1) == j {0} else {dj_1 + di_2}}
         };
         let improving = delta < 0;
-        if improving {
+        let accepting = rng.gen::<f64>() <= (- (delta as f64) / temp).exp();
+        if accepting {
             self.cities.swap(i,j);
             self.cost -= (-delta) as u64;
         }
-        improving
+        (improving,accepting)
     }
 }
 
