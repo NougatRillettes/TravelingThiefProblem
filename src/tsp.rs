@@ -66,8 +66,17 @@ impl Tour {
 
     pub fn rls_try_one<R : rand::Rng>(&mut self, rng : &mut R, temp : f64) -> (bool,bool) {
         let n = self.size();
-        let i = (rng.gen::<usize>() % (n-2)) + 1; // in [1,n-2]
-        let j = (rng.gen::<usize>() % (n -i - 1 )) + i + 1; // in [i+1,n-1]
+        let mut i = (rng.gen::<usize>() % (n-1)) + 1; // in [1,n-1]
+        let mut j = (rng.gen::<usize>() % (n - 2)) + 1;
+        if j >= i {
+            j += 1;
+        }
+        {
+            use std::cmp::{min,max};
+            let tmp = min(i,j);
+            j = max(i,j);
+            i = tmp;
+        }
         let delta : i64 = {
             let dist_bewteen = |a: usize,b:usize| {
                 let coord_a = self.instance.coords[self.cities[a]];
