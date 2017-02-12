@@ -20,6 +20,8 @@ fn main() {
     let inst = instance::read_instance(stdin.lock());
     let mut tour = tsp::new_tour_greedy(Rc::new(inst));
     println!("{:?} {:?}", &tour.cities[..10], tour.cost);
+    tour.two_opt();
+    println!("After first two-opt {}", tour.cost);
     let mut temp = 1.0;
     let mut i = 0;
     let mut last_it = 0;
@@ -33,8 +35,12 @@ fn main() {
                      i,
                      i - last_it,
                      temp);
+
             last_it = i;
         }
     }
+    tour.two_opt();
+    println!("After two-opt {}", tour.cost);
+    println!("Check cost : {:?}", tour.re_compute_cost());
 
 }

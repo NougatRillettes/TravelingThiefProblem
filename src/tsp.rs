@@ -84,12 +84,12 @@ impl Tour {
             j = max(i, j);
             i = tmp;
         }
-        let delta: i64 = {
+        let delta: f64 = {
             let dist_bewteen = |a: usize, b: usize| {
                 let coord_a = self.instance.coords[self.cities[a]];
                 let coord_b = self.instance.coords[self.cities[b]];
                 let tmp = euc_distance(coord_a, coord_b);
-                tmp as i64
+                tmp as f64
             };
             let di_1 = dist_bewteen(i - 1, j) - dist_bewteen(i - 1, i);
             let di_2 = dist_bewteen(j, i + 1) - dist_bewteen(i, i + 1);
@@ -97,19 +97,60 @@ impl Tour {
             let dj_2 = dist_bewteen(i, (j + 1) % n) - dist_bewteen(j, (j + 1) % n);
             di_1 + dj_2 +
             {
-                if (i + 1) == j { 0 } else { dj_1 + di_2 }
+                if (i + 1) == j { 0. } else { dj_1 + di_2 }
             }
         };
-        let improving = delta < 0;
-        let accepting = msg.2 <= (-(delta as f64) / temp).exp();
+        let improving = delta < 0.;
+        let accepting = msg.2 <= (-delta  / temp).exp();
         if accepting {
             self.cities.swap(i, j);
-            self.cost -= (-delta) as f64;
+            self.cost += delta as f64;
         }
         (improving, accepting)
     }
 
+    pub fn two_opt(&mut self) -> () {
+        let mut left = 1;
+        let mut right = 2;
+        let n = self.size();
+        while left < n {
+            if right >= n - 1 {
+                left += 1;
+                right = left + 1;
+                continue;
+            }
+            let instance = &self.instance;
+            let city1a = instance.coords[self.cities[left - 1]];
+            let city1b = instance.coords[self.cities[left]];
+            let city2a = instance.coords[self.cities[right]];
+            let city2b = instance.coords[self.cities[right + 1]];
+            let delta = euc_distance(city1a, city1b) + euc_distance(city2a, city2b)
+              - euc_distance(city1a, city2a) - euc_distance(city1b, city2b);
+            if delta > 0.0 {
+                   let mut i = left ;
+                   let mut j = right;
+                   while i < j {
+                       self.cities.swap(i,j);
+                       i += 1;
+                       j -= 1;
+                   }
+                   self.cost -= delta;
+            }
+            left += 1;
+            right = left + 1;
+        }
+    }
 
+    pub fn re_compute_cost(& self) -> f64 {
+        let mut res = 0.;
+        let mut last_city = 0;
+        for c in self.cities.iter() {
+            res += euc_distance(self.instance.coords[*c],self.instance.coords[last_city]);
+            last_city = *c;
+        };
+        res += euc_distance(self.instance.coords[last_city],self.instance.coords[0]);
+        res
+    }
 }
 
 
