@@ -110,6 +110,49 @@ impl Tour {
         (improving, accepting)
     }
 
+    pub fn two_opt_rand(&mut self,
+                       c: &mpsc::Receiver<(usize, usize, f64)>)
+                       -> bool {
+        let n = self.size();
+        let msg = c.recv().unwrap();
+        let mut i = (msg.0 % (n - 1)) + 1; // in [1,n-1]
+        let mut j = (msg.1 % (n - 2)) + 1;
+        if j >= i {
+            j += 1;
+        }
+        {
+            use std::cmp::{min, max};
+            let tmp = min(i, j);
+            j = max(i, j);
+            i = tmp;
+        }
+        self.two_opt_at(i,j)
+    }
+
+    pub fn two_opt_at(&mut self, left : usize, right : usize) -> bool {
+        let mut changed = false ;
+        let n = self.size();
+            let instance = &self.instance;
+            let city1a = instance.coords[self.cities[left - 1]];
+            let city1b = instance.coords[self.cities[left]];
+            let city2a = instance.coords[self.cities[right]];
+            let city2b = instance.coords[self.cities[(right + 1) % n]];
+            let delta = euc_distance(city1a, city1b) + euc_distance(city2a, city2b)
+              - euc_distance(city1a, city2a) - euc_distance(city1b, city2b);
+            if delta > 0.01 {
+                   let mut i = left ;
+                   let mut j = right;
+                   while i < j {
+                       self.cities.swap(i,j);
+                       i += 1;
+                       j -= 1;
+                   }
+                   self.cost -= delta;
+                   changed = true;
+            }
+        changed
+    }
+
     pub fn two_opt(&mut self) -> bool {
         let mut left = 1;
         let mut right = 2;
@@ -121,26 +164,7 @@ impl Tour {
                 right = left + 1;
                 continue;
             }
-            let instance = &self.instance;
-            let city1a = instance.coords[self.cities[left - 1]];
-            let city1b = instance.coords[self.cities[left]];
-            let city2a = instance.coords[self.cities[right]];
-            let city2b = instance.coords[self.cities[(right + 1) % n]];
-            let delta = euc_distance(city1a, city1b) + euc_distance(city2a, city2b)
-              - euc_distance(city1a, city2a) - euc_distance(city1b, city2b);
-            if delta > 0.0 {
-                   let mut i = left ;
-                   let mut j = right;
-                   while i < j {
-                       self.cities.swap(i,j);
-                       i += 1;
-                       j -= 1;
-                   }
-                   self.cost -= delta;
-                   changed = true;
-            }
-            //left += 1;
-            // right = left;
+            changed |= self.two_opt_at(left,right);
             right += 1;
         }
         changed

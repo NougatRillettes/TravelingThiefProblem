@@ -25,25 +25,38 @@ fn main() {
     let mut tour = tsp::new_tour_greedy(Rc::new(inst));
     println!("{:?} {:?}", &tour.cities[..10], tour.cost);
     tour.two_opt();
+    tour.two_opt();
     println!("After first two-opt {}", tour.cost);
-    let mut temp = 1000.0;
+    let mut temp = 1.0;
     let mut i = 0;
     let mut last_it = 0;
     let max_it = 4.0 * (tour.size() as f64).powi(2) * (tour.size() as f64).ln();
     while (i - last_it) <= (max_it as i64) {
-        temp *= 0.5;
+        temp *= 1.0 - 1e-6;
         i += 1;
         if tour.rls_try_one(&recv, temp).0 {
-            println!("New cost : {:?} in {} iterations ({} since last output) (temp : {:e})",
+            println!("[ RLS ] New cost : {:?} in {} iterations ({} since last output) (temp : {:e})",
                      tour.cost,
                      i,
                      i - last_it,
                      temp);
             last_it = i;
         }
+        if i % 2 == 0 {
+            if tour.two_opt_rand(&recv) {
+                println!("[2-opt] New cost : {:?} in {} iterations ({} since last output) (temp : {:e})",
+                         tour.cost,
+                         i,
+                         i - last_it,
+                         temp);
+                last_it = i;
+            }
+        }
+
     }
     tour.two_opt();
     println!("After two-opt {}", tour.cost);
+
     println!("Check cost : {:?}", tour.re_compute_cost());
     {
         let pathname = env::args().nth(1).unwrap();
