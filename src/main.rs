@@ -35,7 +35,8 @@ fn main() {
         temp *= 1.0 - 1e-6;
         i += 1;
         if tour.rls_try_one(&recv, temp).0 {
-            println!("[ RLS ] New cost : {:?} in {} iterations ({} since last output) (temp : {:e})",
+            println!("[ RLS ] New cost : {:?} in {} iterations ({} since last output) (temp : \
+                      {:e})",
                      tour.cost,
                      i,
                      i - last_it,
@@ -44,7 +45,8 @@ fn main() {
         }
         if i % 2 == 0 {
             if tour.two_opt_rand(&recv) {
-                println!("[2-opt] New cost : {:?} in {} iterations ({} since last output) (temp : {:e})",
+                println!("[2-opt] New cost : {:?} in {} iterations ({} since last output) (temp \
+                          : {:e})",
                          tour.cost,
                          i,
                          i - last_it,
