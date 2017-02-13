@@ -3,6 +3,10 @@ use std::io::prelude::*;
 use std::rc::Rc;
 use std::sync::mpsc;
 use std::thread;
+use std::env;
+use std::path::Path;
+use std::fs::File;
+
 
 extern crate rand;
 use rand::Rng;
@@ -22,12 +26,12 @@ fn main() {
     println!("{:?} {:?}", &tour.cities[..10], tour.cost);
     tour.two_opt();
     println!("After first two-opt {}", tour.cost);
-    let mut temp = 1.0;
+    let mut temp = 1000.0;
     let mut i = 0;
     let mut last_it = 0;
     let max_it = 4.0 * (tour.size() as f64).powi(2) * (tour.size() as f64).ln();
     while (i - last_it) <= (max_it as i64) {
-        temp *= 0.95;
+        temp *= 0.5;
         i += 1;
         if tour.rls_try_one(&recv, temp).0 {
             println!("New cost : {:?} in {} iterations ({} since last output) (temp : {:e})",
@@ -35,12 +39,16 @@ fn main() {
                      i,
                      i - last_it,
                      temp);
-
             last_it = i;
         }
     }
     tour.two_opt();
     println!("After two-opt {}", tour.cost);
     println!("Check cost : {:?}", tour.re_compute_cost());
-
+    {
+        let pathname = env::args().nth(1).unwrap();
+        let path = Path::new(&pathname);
+        let mut file = File::create(path).unwrap();
+        tour.print_svg(&mut file);
+    }
 }

@@ -3,6 +3,7 @@ use instance::*;
 use std::iter::Peekable;
 use std::rc::Rc;
 use std::sync::mpsc;
+use std::io::Write;
 
 extern crate rand;
 
@@ -109,12 +110,13 @@ impl Tour {
         (improving, accepting)
     }
 
-    pub fn two_opt(&mut self) -> () {
+    pub fn two_opt(&mut self) -> bool {
         let mut left = 1;
         let mut right = 2;
+        let mut changed = false ;
         let n = self.size();
         while left < n {
-            if right >= n - 1 {
+            if right >= n {
                 left += 1;
                 right = left + 1;
                 continue;
@@ -123,7 +125,7 @@ impl Tour {
             let city1a = instance.coords[self.cities[left - 1]];
             let city1b = instance.coords[self.cities[left]];
             let city2a = instance.coords[self.cities[right]];
-            let city2b = instance.coords[self.cities[right + 1]];
+            let city2b = instance.coords[self.cities[(right + 1) % n]];
             let delta = euc_distance(city1a, city1b) + euc_distance(city2a, city2b)
               - euc_distance(city1a, city2a) - euc_distance(city1b, city2b);
             if delta > 0.0 {
@@ -135,10 +137,13 @@ impl Tour {
                        j -= 1;
                    }
                    self.cost -= delta;
+                   changed = true;
             }
-            left += 1;
-            right = left + 1;
+            //left += 1;
+            // right = left;
+            right += 1;
         }
+        changed
     }
 
     pub fn re_compute_cost(& self) -> f64 {
@@ -150,6 +155,22 @@ impl Tour {
         };
         res += euc_distance(self.instance.coords[last_city],self.instance.coords[0]);
         res
+    }
+
+    pub fn print_svg<B : Write>(&self, b : &mut B) {
+        writeln!(b,"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\">").unwrap();
+        let mut last_city = 0;
+        for c in &self.cities {
+            let (x1,y1) = self.instance.coords[last_city];
+            let (x2,y2) = self.instance.coords[*c];
+            writeln!(b,"<line x1=\"{}\" y1=\"{}\" x2=\"{}\" y2=\"{}\" stroke=\"black\" stroke-width=\"2\" />",x1,y1,x2,y2).unwrap();
+            writeln!(b,"<circle cx=\"{}\" cy=\"{}\" r=\"2\" fill=\"{}\" />",x1,y1,if *c == 0 {"orange"} else {"blue"}).unwrap();
+            last_city = *c;
+        }
+            let (x1,y1) = self.instance.coords[last_city];
+            let (x2,y2) = self.instance.coords[0];
+            writeln!(b,"<line x1=\"{}\" y1=\"{}\" x2=\"{}\" y2=\"{}\" stroke=\"black\" stroke-width=\"4\" />",x1,y1,x2,y2).unwrap();
+            writeln!(b,"</svg>").unwrap();
     }
 }
 
