@@ -7,7 +7,7 @@ use std::io;
 
 #[derive(Debug)]
 pub struct Item {
-    pub index: u64,
+    pub index: usize,
     pub profit: i64,
     pub weight: u64,
     pub in_city: u64,

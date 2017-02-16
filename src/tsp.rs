@@ -8,6 +8,7 @@ use std::io::Write;
 extern crate rand;
 
 // Simply a Tour on cities, element of the Vec are cities indexes.
+#[derive(Debug)]
 pub struct Tour {
     pub instance: Rc<Instance>,
     pub cost: f64,
@@ -110,7 +111,66 @@ impl Tour {
         (improving, accepting)
     }
 
-    pub fn two_opt_rand(&mut self, c: &mpsc::Receiver<(usize, usize, f64)>) -> bool {
+    pub fn stich_try_one(&mut self,
+                       c: &mpsc::Receiver<(usize, usize, f64, usize, bool)>,
+                       temp: f64)
+                       -> (bool, bool) {
+        let n = self.size();
+        let msg = c.recv().unwrap();
+        let x = (msg.0 % (n - 2)) + 1; // in [1,n-2]
+        let y = (msg.1 % (n - 2)) + 1;
+        let z = (msg.3 % (n - 2)) + 1;
+        let i;
+        let j;
+        let a;
+        let mut v = vec![x,y,z];
+        v.sort();
+        if msg.4 {
+            a = v[0];
+            i = v[1];
+            j = v[2];
+        } else {
+            i = v[0];
+            j = v[1];
+            a = v[2];
+        }
+        if i-1 <= a && a <= j + 1 {
+            return (false,false);
+        }
+        let delta: f64 = {
+            let dist_bewteen = |a: usize, b: usize| {
+                let coord_a = self.instance.coords[self.cities[a]];
+                let coord_b = self.instance.coords[self.cities[b]];
+                let tmp = euc_distance(coord_a, coord_b);
+                tmp as f64
+            };
+            dist_bewteen(a,i)+dist_bewteen(j,a+1)+dist_bewteen(i-1,j+1)
+            - dist_bewteen(a,a+1) - dist_bewteen(i-1,i) - dist_bewteen(j,j+1)
+        };
+        let improving = delta < -0.0;
+        let accepting = msg.2 <= (-delta / temp).exp();
+        if accepting {
+            println!("{:?}", (a,i,j,delta));
+            let mut new_cities : Vec<usize> = Vec::new();
+            if a < i {
+                new_cities.extend(&self.cities[..a+1]);
+                new_cities.extend(&self.cities[i..j+1]);
+                new_cities.extend(&self.cities[a+1..i]);
+                new_cities.extend(&self.cities[j+1..]);
+            } else {
+                new_cities.extend(&self.cities[..i]);
+                new_cities.extend(&self.cities[j+1..a+1]);
+                new_cities.extend(&self.cities[i..j+1]);
+                new_cities.extend(&self.cities[a+1..]);
+            }
+        self.cities = new_cities;
+        self.cost += delta;
+
+        }
+        (improving, accepting)
+    }
+
+    pub fn two_opt_rand(&mut self, c: &mpsc::Receiver<(usize, usize)>) -> bool {
         let n = self.size();
         let msg = c.recv().unwrap();
         let mut i = (msg.0 % (n - 1)) + 1; // in [1,n-1]
@@ -185,7 +245,7 @@ impl Tour {
                   xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\">")
             .unwrap();
         let mut last_city = 0;
-        for c in &self.cities {
+        for c in &self.cities[1..] {
             let (x1, y1) = self.instance.coords[last_city];
             let (x2, y2) = self.instance.coords[*c];
             writeln!(b,
@@ -200,7 +260,7 @@ impl Tour {
                      "<circle cx=\"{}\" cy=\"{}\" r=\"2\" fill=\"{}\" />",
                      x1,
                      y1,
-                     if *c == 0 { "orange" } else { "blue" })
+                     "blue")
                 .unwrap();
             last_city = *c;
         }
@@ -214,11 +274,17 @@ impl Tour {
                  x2,
                  y2)
             .unwrap();
+            writeln!(b,
+                     "<circle cx=\"{}\" cy=\"{}\" r=\"4\" fill=\"{}\" />",
+                     x2,
+                     y2,
+                     "red")
+                .unwrap();
         writeln!(b, "</svg>").unwrap();
     }
 }
 
-
+/* LEGACY
 
 
 // An Iterator on the crossing edges of a Tour (ie those whose
@@ -267,3 +333,4 @@ impl Tour {
         }
     }
 }
+*/
