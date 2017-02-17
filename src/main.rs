@@ -97,7 +97,7 @@ fn main() {
             //println!("!!" );
         }
         if b.0 {
-            println!("[Knap2] New val : {:?} in {} iterations ({} since last output) (temp : \
+            println!("[Knap] New val : {:?} in {} iterations ({} since last output) (temp : \
                       {:e})",
                      k.profit - k.cost,
                      i,

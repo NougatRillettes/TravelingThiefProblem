@@ -59,12 +59,12 @@ fn read_item(s: &str) -> Item {
     let idx = words.nth(0).unwrap().parse().unwrap();
     let profit = words.nth(0).unwrap().parse().unwrap();
     let weight = words.nth(0).unwrap().parse().unwrap();
-    let city = words.nth(0).unwrap().parse().unwrap();
+    let city : u64 = words.nth(0).unwrap().parse().unwrap();
     Item {
         index: idx,
         profit: profit,
         weight: weight,
-        in_city: city,
+        in_city: city - 1 ,
     }
 }
 

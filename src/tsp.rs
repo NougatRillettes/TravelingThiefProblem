@@ -150,7 +150,7 @@ impl Tour {
         let improving = delta < -0.0;
         let accepting = msg.2 <= (-delta / temp).exp();
         if accepting {
-            println!("{:?}", (a,i,j,delta));
+            //println!("{:?}", (a,i,j,delta));
             let mut new_cities : Vec<usize> = Vec::new();
             if a < i {
                 new_cities.extend(&self.cities[..a+1]);
