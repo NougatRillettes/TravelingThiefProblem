@@ -20,7 +20,10 @@ impl Knapsack {
         let inst = &self.tour.instance;
         let dv = inst.min_speed - inst.max_speed;
         //println!("{:?}", self.city_weight);
-        let speeds : Vec<_> = self.city_weight.iter().map(|w| ((*w as f64)/(inst.capacity as f64) * dv + inst.max_speed)).collect();
+        let speeds: Vec<_> = self.city_weight
+            .iter()
+            .map(|w| ((*w as f64) / (inst.capacity as f64) * dv + inst.max_speed))
+            .collect();
         let mut res = self.distances
             .iter()
             .zip(speeds)
@@ -29,7 +32,7 @@ impl Knapsack {
         res *= inst.rent_ratio;
         res
     }
-/*
+    /*
     pub fn re_compute_profit(&self) -> f64 {
         self.is_in
             .iter()
@@ -74,18 +77,18 @@ impl Knapsack {
         let m = self.is_in.len();
         let i = msg.0 % (m - 1);
         let it_weight = self.tour.instance.items[i].weight;
-        if (! self.is_in[i]) && it_weight > self.rem_cap {
-            return (false,false)
+        if (!self.is_in[i]) && it_weight > self.rem_cap {
+            return (false, false);
         }
 
         let prev_cost = self.cost;
-        let sign : f64 = if self.is_in[i] { -1. } else { 1. };
+        let sign: f64 = if self.is_in[i] { -1. } else { 1. };
         let delta_profit = (sign as f64) * self.tour.instance.items[i].profit as f64;
         let idx_of_it_city_in_tour = self.city_idx_in_tour[(*self.tour.instance).items[i]
             .in_city as usize];
         for w in self.city_weight[idx_of_it_city_in_tour..].iter_mut() {
             *w = ((*w as i64) + (sign as i64) * (it_weight as i64)) as u64;
-        };
+        }
         let new_cost = self.re_compute_cost();
         let delta = -new_cost + prev_cost + (delta_profit as f64);
         let improving = delta > 0.;
@@ -94,7 +97,7 @@ impl Knapsack {
         if !accepting {
             for w in self.city_weight[idx_of_it_city_in_tour..].iter_mut() {
                 *w = ((*w as i64) - (sign as i64) * (it_weight as i64)) as u64;
-            };
+            }
             return (false, false);
         };
         self.profit += delta_profit;

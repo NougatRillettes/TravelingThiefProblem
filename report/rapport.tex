@@ -57,7 +57,7 @@
 \noindent
 \sffamily
 \begin{center}
-{\Large { Centre de Recherches Interdisciplinaires |  M1 AIV}}
+{\Large { ENS $\codt$ Université Paris Diderot |  M2 MPRI}}
 %\\[1em]
 
 \HRule
@@ -77,13 +77,14 @@
 \end{tabular}
 \vspace{1em}
 %\vfill
-\end{center}}]
+\end{center}
+}]
 
 
 \newcommand{\wip}[1]{\textcolor{Purple}{WIPWIPWIPWIP #1 WIPWIPWIPWIP}}
 
 \begin{abstract}
-	We hereby present our solution to the traveling thief problem. Using a two phase algorithm inspired by \cite{Polyakovkiy}, we manage to reach solutions of about $16k$ on the \texttt{a280\_n279\_bounded-strongly-corr\_01.ttp} instance.
+	We hereby present our solution to the traveling thief problem. Using a two phase algorithm inspired by \cite{Polyakovkyi}, we manage to reach solutions of about $16k$ on the easiest instance.
 \end{abstract}
 
 \section{Our algorithm}
@@ -135,16 +136,18 @@ This operation simply picks two nodes uniformly at random, compute $\Delta$ the 
 	\label{stitch_fig}
 \end{figure}
 
-As illustrated in figure \ref{stitch_fig}, the stitching operation consist in "inserting a part of the tour between two nodes". As with the nodes inversion, this is only done with probability $\overline{e^{\frac{-\Delta}{T}}}$.
+As illustrated in figure \ref{stitch_fig}, the stitching operation consist in "inserting a part of the tour between two nodes". As with the nodes inversion, this is only done with probability $\overline{e^{\frac{-\Delta}{T}}}$ where $\Delta$ is the cost difference.
+
+It can be remarked that stitching is a restriction of 3-opt that does not allow one to change the orientation of one of the three sub parts.
 
 \subsubsection{2-opt}
-Two opt is plentifully described in literature. We simply implement it with a selection of the points at random. 
+Two opt is plentifully described in literature. We simply implement it in two flavors. In the exhaustive one, all possibilities are tested. In the random flavor, only a random pair of points is evaluated, and accepted with probability $\overline{e^{\frac{-\Delta}{T}}}$ where $\Delta$ is the cost difference.
 
 \subsection{Knapsack}
 Once the tour is generated, we still have to choose wich items to pick up. To this end, we simply use the RLS algorithm described in \cite{Polyakovskiy}.
 
 \subsection{Number of iterations}
-Because we need to run two optimizing heuristics one after the other, we must give a way to the algorithm to decide whether or not it has reached a good solution for the TSP. Because the keystone of our algorithm is the random selection of two (for 2-opt and node inversion) or three (for stitching) nodes, and because the expected run time of a coupon collector on $n^2$ entries is about $2n^2\ln(n)$, we say that our algorithm is done once there have been $4n^2\ln(n)$ iteration without improving the score, which gives a probability $1/n$ of having missed some couple of points.
+Because we need to run two optimizing heuristics one after the other, we must give a way to the algorithm to decide whether or not it has reached a good solution for the TSP. Because the keystone of our algorithm is the random selection of two (for 2-opt and node inversion) or three (for stitching) nodes, and because the expected run time of a coupon collector on $n^2$ entries is about $2n^2\ln(n)$, we would like to say that our algorithm is done once there have been $4n^2\ln(n)$ iteration without improving the score, which gives a probability $1/n^2$ of having missed some couple of points.
 
 As is often the case when doing simulated annealing, we do several run of the "optimization with decreasing temperature" part. This gives the overall algorithm in figure \ref{algo}
 
