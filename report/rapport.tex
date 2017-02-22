@@ -58,37 +58,29 @@
 \sffamily
 \begin{center}
 {\Large { ENS $\codt$ Université Paris Diderot |  M2 MPRI}}
-%\\[1em]
-
 \HRule
-
 \vspace{1em}
 {\Huge Solving optimization problems with search heuristics }\\[0.7em]
-
 {\Huge Project report
 }
-
 \HRule
 \\[2em]
-
 \LARGE
 \begin{tabular}{c}
 	Arthur Carcano\\
 \end{tabular}
 \vspace{1em}
-%\vfill
-\end{center}
-}]
+\end{center}}]
 
 
 \newcommand{\wip}[1]{\textcolor{Purple}{WIPWIPWIPWIP #1 WIPWIPWIPWIP}}
 
 \begin{abstract}
-	We hereby present our solution to the traveling thief problem. Using a two phase algorithm inspired by \cite{Polyakovkyi}, we manage to reach solutions of about $16k$ on the easiest instance.
+	We hereby present our solution to the traveling thief problem. Using a two phase algorithm inspired by \cite{Polyakovskiy}, we manage to reach solutions of about $16k$ on the easiest instance.
 \end{abstract}
 
 \section{Our algorithm}
-Following the idea of Polyakovsiy \textit{et al.} \cite{Polyakovskiy} our algorithm runs in two phases. First a run for the travellign salesman problem is generated. Second, using this run, the algorithm plans which objects are to be picked up so as to maximize the total profit of our thief.
+Following the idea of Polyakovsiy \textit{et al.} \cite{Polyakovskiy} our algorithm runs in two phases. First a run for the traveling salesman problem is generated. Second, using this run, the algorithm plans which objects are to be picked up so as to maximize the total profit of our thief.
 
 It is noteworthy that, whereas our algorithm for the first phase is kind of intricate, the one used for the second phase is merely a classical simulated annealing.
 
@@ -99,7 +91,7 @@ To solve the TSP problem, we first build a greedy solution on which we run an ex
 	\centering
 	\includegraphics[width=0.9\linewidth]{tsp}
 	\label{tsp_sol}
-	\caption{A possible tour, as foudn by our algorithm.}
+	\caption{A possible tour, as found by our algorithm.}
 \end{figure}
 
 
@@ -149,7 +141,9 @@ Once the tour is generated, we still have to choose wich items to pick up. To th
 \subsection{Number of iterations}
 Because we need to run two optimizing heuristics one after the other, we must give a way to the algorithm to decide whether or not it has reached a good solution for the TSP. Because the keystone of our algorithm is the random selection of two (for 2-opt and node inversion) or three (for stitching) nodes, and because the expected run time of a coupon collector on $n^2$ entries is about $2n^2\ln(n)$, we would like to say that our algorithm is done once there have been $4n^2\ln(n)$ iteration without improving the score, which gives a probability $1/n^2$ of having missed some couple of points.
 
-As is often the case when doing simulated annealing, we do several run of the "optimization with decreasing temperature" part. This gives the overall algorithm in figure \ref{algo}
+Unfortunately, this is often far too big, and we hence set a timed artificial limit of ten minutes.
+
+As is often the case when doing simulated annealing, we do several (here 10) run of the "optimization with decreasing temperature" part. This gives the overall algorithm in figure \ref{algo}.
 
 \begin{figure}
 \begin{algorithmic}
@@ -157,7 +151,7 @@ As is often the case when doing simulated annealing, we do several run of the "o
 	\State do one exhaustive 2-opt
 \For {$i \in 0..10$}
 	\State temp = 1
-	\While{One of the last $4n^2\ln(n)$ iterations has improved the score}
+	\While{One of the last $4n^2\ln(n)$ iterations has improved the score \&\& Elapsed time for this loop is < 3:00}
 	\State do 4 RLS for inversion
 	\State do 1 RLS for 2-opt
 	\State do 1 RLS for stitching
@@ -166,22 +160,53 @@ As is often the case when doing simulated annealing, we do several run of the "o
 	\EndFor
 \For {$i \in 0..10$}
 \State temp = 100	
-	\While{One of the last $2n\ln(n)$ iterations has improved the score}
+	\While{One of the last $2n\ln(n)$ iterations has improved the score \&\& Elapsed time for this loop is < 3:00}
 	\State do 1 RLS
 	\State temp $/=$ 0.9999
 	\EndWhile
 	\EndFor
 
 \end{algorithmic}
-\label{algo}
-\caption{Our algorithm}
+\caption{Our algorithm \label{algo}}
 \end{figure} 
 
 \section{Results}
 
+Final profit for the thief in each of the nine test instances is given in table \ref{table}.
 
-
-
+\begin{table}[hbtp]
+	\centering
+\begin{tabular}{|l|c|}
+	\hline 
+	\textbf{Instance} & \textbf{Score}  \\ 
+			\hline 
+	a280-n279 & 15320 \\ 
+		\hline 
+	a280-n2790 & 393504 \\
+	\hline 
+	a280-n1395 & 99334 \\ 
+	\hline 
+		fnl4461-n4460 & 213901 \\ 
+	\hline 
+		fnl4461-n44600 & 5846921 \\ 
+		\hline 
+	fnl4461-n22300 & 122205 \\
+	\hline
+	pla33810-n169045 & 12169506\\
+	\hline
+	pla33810-n338090 & 46709533\\
+	\hline
+	pla33810-n33809 & 1506827\\
+	\hline
+\end{tabular}
+\caption{Final results of our algorithm \label{table}} 
+\end{table}
+\section{Possible improvements}
+There is two possible improvements I would have like to have time to work on.
+\subsection{Correlation of temperature parameter with entry}
+No parameter for the temperatures (initial value and decrease rate) gave satisfying results on all instances. A possible improvement would be to find a relation between the entry dimensions and the ideal values of those parameter.
+\subsection{Different weighting for the TSP}
+In our TSP solving, all edges have a cost assigned by their euclidean distance. Yet, at the end of the tour, the thief will be more heavily loaded, hence assigning a greater cost per length unit to the edges at the end of the tour might be a good idea. This would lead to tour biased towards short edges at the end. Yet, one has to be careful when adding more parameter to the algorithm, and finding a good way to increase the edge cost per length unit might very well turn out to be quite tricky.
 \bibliographystyle{siam}
 \bibliography{biblio}
 

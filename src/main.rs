@@ -33,7 +33,7 @@ fn main() {
     let recv_rls = new_gen();
     let recv_two_opt = new_gen();
     let recv_stich = new_gen();
-    let recv_knap = new_gen();
+    //let recv_knap = new_gen();
     let stdin = std::io::stdin();
     let inst = instance::read_instance(stdin.lock());
     let mut tour = tsp::new_tour_greedy(Rc::new(inst));
@@ -90,6 +90,7 @@ fn main() {
         }
     }
     println!("Check cost : {:?}", tour.re_compute_cost());
+    /*
     let mut k = knapsack::Knapsack::new(Rc::new(tour));
     for loop_n in 0..10 {
         let start_time = time::now();
@@ -120,14 +121,15 @@ fn main() {
         }
 
         //    println!("{:?}", tour.cities );
-/*
+    }
+*/
     {
         let pathname = env::args().nth(1).unwrap();
         let path = Path::new(&pathname);
         let mut file = File::create(path).unwrap();
         tour.print_svg(&mut file);
     }
-    */
 
-    }
+
+
 }
